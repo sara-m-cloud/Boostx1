@@ -46,7 +46,8 @@ for (const file of files) {
   models[model.name] = model;
 }
 
-console.log("Loaded models:", Object.keys(models)); 
+console.log("Loaded models:", Object.keys(models));
+
 // ======== Setup associations ========
 Object.keys(models).forEach(modelName => {
   if (models[modelName].associate) {
@@ -60,7 +61,7 @@ Object.keys(models).forEach(modelName => {
 //  SYNC DB (CREATE TABLES)
 // =============================
 export const syncDBConnection = async () => {
-    await sequelize.sync()
+    await sequelize.sync({alter:true})
         .then(res => {
             console.log('DB synced done');
         })
@@ -69,5 +70,5 @@ export const syncDBConnection = async () => {
         });
 };
 
-export const db = { ...models, sequelize, Sequelize };
+ export const db = { ...models, sequelize, Sequelize };
 

@@ -1,14 +1,44 @@
+export const providertypes={
+  google:"google",
+  system:"system"
+}
 export default (sequelize, DataTypes) => {
   const User = sequelize.define("User", {
-    uid: { type: DataTypes.STRING, primaryKey: true },
+ uid: {
+  type: DataTypes.INTEGER,
+  primaryKey: true,
+  autoIncrement: true
+}
+,
     imageUrl: DataTypes.STRING,
     description: DataTypes.TEXT,
     email: { type: DataTypes.STRING, unique: true },
-    Password: DataTypes.STRING,
+   password: {
+  type: String,
+  required: (data) => data?.provider == providertypes.google ? false : true
+}
+,
     role: DataTypes.STRING,
     name: DataTypes.STRING,
     phoneNumber: DataTypes.STRING,
-    createdAt: DataTypes.STRING,
+    // createdAt: DataTypes.STRING,
+    provider: {
+  type: DataTypes.ENUM(...Object.values(providertypes)),
+  allowNull: false,
+  defaultValue: providertypes.system
+}
+,
+    confirmEmailOTP:DataTypes.STRING,
+    confirmpassswordOTP:DataTypes.STRING,
+    confirmEmail: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false,
+},
+changeCridentialsTime: {
+  type: DataTypes.DATE,
+  allowNull: true,
+},
+
   });
 
   User.associate = (models) => {
