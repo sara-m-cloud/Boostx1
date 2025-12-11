@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const Client = sequelize.define("Client", {
-    uid: { type: DataTypes.STRING, primaryKey: true },
+    uid: { type: DataTypes.INTEGER, primaryKey: true },
     nationalId: DataTypes.STRING,
     nationality: DataTypes.STRING,
     savedPosts: DataTypes.JSON,

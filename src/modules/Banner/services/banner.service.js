@@ -11,16 +11,16 @@ const { Banner } = db;
 export const addBanner = asynchandler(async (req, res, next) => {
   const { title, redirectUrl } = req.body;
 
-
+ const bannerId = uuidv4();
    if (!req.files || req.files.length === 0) {
     return next(new Error("Images are required", { cause: 400 }));
   }
 
-  const imageUrls = await uploadMultipleBanners(req.files);
+  const imageUrls = await uploadMultipleBanners(req.files,bannerId);
 
   // ✅ 2) حفظ البيانات في DB
   const banner = await Banner.create({
-    id: uuidv4(),
+    id: bannerId,
     title,
     images: imageUrls,
     redirectUrl,

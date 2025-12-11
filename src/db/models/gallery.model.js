@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const Gallery = sequelize.define("Gallery", {
-    id: { type: DataTypes.STRING, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.STRING, primaryKey: true },
     postId: { type: DataTypes.STRING },     // FK → Post.postId
     galleryId: DataTypes.STRING,            // gallery unique id
 

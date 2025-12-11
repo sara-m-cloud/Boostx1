@@ -1,8 +1,12 @@
 export default (sequelize, DataTypes) => {
   const Freelancer = sequelize.define("Freelancer", {
-    id: { type: DataTypes.STRING, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
 
-    vendorUid: { type: DataTypes.STRING }, 
+    vendorUid: {
+  type: DataTypes.INTEGER,
+  allowNull: false,
+},
+
     nationalityId: DataTypes.STRING,
     nationality: DataTypes.STRING,
 

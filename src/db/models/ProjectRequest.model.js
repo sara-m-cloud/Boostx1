@@ -3,15 +3,25 @@ export default (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
-      primaryKey: true
+      primaryKey: true,
     },
-    uid: DataTypes.INTEGER,        // foreign key -> User.uid
-    projectId: DataTypes.STRING, // foreign key -> Project.id
+
+    uid: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+
+    projectId: {
+      type: DataTypes.INTEGER, // ✅ لازم INTEGER
+      allowNull: false,
+    },
+
     description: DataTypes.TEXT,
     totalBudget: DataTypes.DOUBLE,
     totalDays: DataTypes.INTEGER,
+
     createdAt: DataTypes.STRING,
-    updatedAt: DataTypes.STRING
+    updatedAt: DataTypes.STRING,
   });
 
   ProjectRequest.associate = (models) => {

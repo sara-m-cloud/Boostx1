@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const Admin = sequelize.define("Admin", {
-    uid: { type: DataTypes.STRING, primaryKey: true },
+    uid: { type:DataTypes.INTEGER, primaryKey: true },
     adminTransaction: DataTypes.TEXT,
   });
 

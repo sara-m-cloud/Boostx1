@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const TeamLeader = sequelize.define("TeamLeader", {
-    uid: { type: DataTypes.STRING, primaryKey: true },
+    uid: { type: DataTypes.INTEGER, primaryKey: true },
     log: DataTypes.TEXT,
   });
 

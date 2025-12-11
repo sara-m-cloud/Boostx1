@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
     allowNull: false,
   },
     uid: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     galleryId: DataTypes.STRING,

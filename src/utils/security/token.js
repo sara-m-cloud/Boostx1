@@ -45,7 +45,7 @@ export const decodedtoken = async ({
       access_signature = process.env.ADMIN_ACCESS_TOKEN;
       break;
 
-    case "user":
+    case "User":
       access_signature = process.env.USER_ACCESS_TOKEN;
       refresh_signature = process.env.USER_REFRESH_TOKEN;
       break;
@@ -60,6 +60,9 @@ export const decodedtoken = async ({
     signature:
       tokentype == tokentypes.access ? access_signature : refresh_signature,
   });
+console.log(decoded.id);
+console.log(decoded);
+
 
   if (!decoded?.id) {
     return next(new Error("in-valid token payload", { cause: 401 }));
@@ -68,10 +71,12 @@ export const decodedtoken = async ({
   // Fetch user from Sequelize
   const user = await User.findOne({
     where: {
-      uid: decoded.id, // SQL → مفيش _id
+      uid:decoded.id, // SQL → مفيش _id
       isDeleted: false, // لازم تكوني عاملة العمود ده
     },
   });
+  console.log(user);
+  
 
   if (!user) {
     return next(new Error("not register account", { cause: 404 }));

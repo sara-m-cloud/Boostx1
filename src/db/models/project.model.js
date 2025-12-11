@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const Project = sequelize.define("Project", {
-    uid: DataTypes.STRING,
+    uid: DataTypes.INTEGER,
     title: DataTypes.STRING,
     description: DataTypes.TEXT,
    id: {                     // نضيف ID افتراضي
@@ -40,10 +40,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: "projectId"
     });
 
-    Project.hasMany(models.ProjectRequest, {
-      foreignKey: "projectId",
+     Project.hasMany(models.ProjectRequest, {
+       foreignKey: "projectId",
       onDelete: "CASCADE"
-    });
+     });
   };
 
   return Project;

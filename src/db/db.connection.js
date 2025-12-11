@@ -4,9 +4,10 @@ import path from "node:path"
 import { fileURLToPath, pathToFileURL } from 'url';
 
 
-const sequelize = new Sequelize('Boostxdatabase', 'root', '', {
+const sequelize = new Sequelize('boostxdatabase', 'root', '', {
     host: '127.0.0.1',   // localhost
-    dialect: 'mysql'
+    dialect: 'mysql',
+      timezone: "+00:00"
 });
 
 // =============================
@@ -61,7 +62,7 @@ Object.keys(models).forEach(modelName => {
 //  SYNC DB (CREATE TABLES)
 // =============================
 export const syncDBConnection = async () => {
-    await sequelize.sync({alter:true})
+   await sequelize.sync({ alter: true })
         .then(res => {
             console.log('DB synced done');
         })

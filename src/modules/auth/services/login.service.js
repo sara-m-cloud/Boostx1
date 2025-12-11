@@ -40,13 +40,13 @@ export const login = asynchandler(async (req, res, next) => {
  // 4) توليد التوكن
   const accesstoken = generatetoken({
     payload: { id: user.uid }, // مش user._id — SQL مفيهوش _id
-    signature: user.role="Admin"
+    signature: user.role==="Admin"
       ? process.env.ADMIN_ACCESS_TOKEN
       : process.env.USER_ACCESS_TOKEN,
   });
   const refreshtoken = generatetoken({
     payload: { id: user.uid },
-    signature:user.role="Admin"
+    signature:user.role==="Admin"
       ? process.env.ADMIN_REFRESH_TOKEN
       : process.env.USER_REFRESH_TOKEN,
   });
@@ -124,7 +124,6 @@ console.log(user);
     }
   });
 });
-
 export const getrefreshtoken = asynchandler(async (req, res, next) => {
   const { authorization } = req.headers;
   // ⬅️ فك التوكن

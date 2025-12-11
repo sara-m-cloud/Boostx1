@@ -2,21 +2,40 @@ export const providertypes={
   google:"google",
   system:"system"
 }
+export const roletypes={
+    Admin:"Admin",
+    User:"User",
+    Client:"Client"
+}
 export default (sequelize, DataTypes) => {
   const User = sequelize.define("User", {
  uid: {
   type: DataTypes.INTEGER,
   primaryKey: true,
   autoIncrement: true
-}
-,
+},isDeleted: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false,
+},
+
     imageUrl: DataTypes.STRING,
     description: DataTypes.TEXT,
     email: { type: DataTypes.STRING, unique: true },
-   password: {
-  type: String,
-  required: (data) => data?.provider == providertypes.google ? false : true
+Password: {
+  type: DataTypes.STRING,
+  allowNull: false, // لا يسمح بـ null في أي حالة
+  validate: {
+    checkRequired(value) {
+      if (this.provider === providertypes.google) {
+        return; // OK
+      }
+      if (!value) {
+        throw new Error("Password is required for non-Google accounts");
+      }
+    }
+  }
 }
+
 ,
     role: DataTypes.STRING,
     name: DataTypes.STRING,
@@ -32,7 +51,7 @@ export default (sequelize, DataTypes) => {
     confirmpassswordOTP:DataTypes.STRING,
     confirmEmail: {
   type: DataTypes.BOOLEAN,
-  defaultValue: false,
+  defaultValue: true,
 },
 changeCridentialsTime: {
   type: DataTypes.DATE,
