@@ -1,11 +1,13 @@
 export const providertypes={
   google:"google",
-  system:"system"
+  system:"system",
+  facebook:"facebook"
 }
 export const roletypes={
     Admin:"Admin",
     User:"User",
-    Client:"Client"
+    Client:"Client",
+    Vendor:"Vendor"
 }
 export default (sequelize, DataTypes) => {
   const User = sequelize.define("User", {
@@ -23,7 +25,7 @@ export default (sequelize, DataTypes) => {
     email: { type: DataTypes.STRING, unique: true },
 Password: {
   type: DataTypes.STRING,
-  allowNull: false, // لا يسمح بـ null في أي حالة
+  // allowNull: false, // لا يسمح بـ null في أي حالة
   validate: {
     checkRequired(value) {
       if (this.provider === providertypes.google) {
@@ -66,8 +68,20 @@ changeCridentialsTime: {
     User.hasOne(models.Vendor, { foreignKey: "uid" });
     User.hasOne(models.Employee, { foreignKey: "uid" });
     User.hasOne(models.TeamLeader, { foreignKey: "uid" });
-    User.hasOne(models.Freelancer, { foreignKey: "uid" });
-    User.hasOne(models.Agency, { foreignKey: "uid" });
+  User.hasMany(models.Banner, {
+    foreignKey: "createdBy",
+    as: "banners"
+  });
+    User.hasMany(models.Chat, {
+    foreignKey: "clientId",
+    as: "clientChats"
+  });
+
+  User.hasMany(models.Chat, {
+    foreignKey: "freelancerId",
+    as: "freelancerChats"
+  });
+
 
     User.hasMany(models.CompletedProject, { foreignKey: "uid" });
   };

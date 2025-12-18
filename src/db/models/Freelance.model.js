@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
     nationalityId: DataTypes.STRING,
     nationality: DataTypes.STRING,
 
-    categoryId: { type: DataTypes.STRING }, // FK → Category.id
+    categoryId: { type: DataTypes.INTEGER }, // FK → Category.id
   });
 
   Freelancer.associate = (models) => {

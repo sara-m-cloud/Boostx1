@@ -1,17 +1,18 @@
 import { Router } from "express";
 import { authentication, authorization } from "../../middleware/auth.middleware.js";
 import * as storyservice from "./services/story.service.js"
-import {validationfile } from "../../utils/multer/uploadedimage.js";
-import { uploadstory } from "../../utils/multer/cloud.multer.js";
+// import {validationfile } from "../../utils/multer/uploadedimage.js";
+// import { uploadstory } from "../../utils/multer/local.multer.js";
 // import { endpoint } from "./story.authorization.js";
 import { roletypes } from "../../db/models/User.model.js";
+import { uploadStoryMedia } from "./media/upload.storymedia.js";
 const router = Router();
 
 router.post(
   "/createstory",
   authentication(),
   authorization([roletypes.Admin]),   // ✅ Admin فقط
- uploadstory(validationfile.imageOrVideo).array("media", 1),storyservice.createstory
+uploadStoryMedia,storyservice.createstory
 );
 router.post(
   "/viewstory/:storyId",
@@ -27,7 +28,6 @@ router.get(
 router.get(
   "/stories",
   authentication(),
-  authorization([roletypes.Client]), // ✅ Clients فقط
   storyservice.getActiveStories
 );
 router.delete(

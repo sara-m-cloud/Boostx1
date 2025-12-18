@@ -1,7 +1,7 @@
 export default (sequelize, DataTypes) => {
   const Skills = sequelize.define("Skills", {
-    id: { type: DataTypes.STRING, primaryKey: true },
-    categoryId: DataTypes.STRING,
+    id: { type: DataTypes.INTEGER, primaryKey: true },
+    categoryId: DataTypes.INTEGER,
     name: DataTypes.STRING,
     icon: DataTypes.STRING,
   });

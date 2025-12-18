@@ -1,21 +1,70 @@
 export default (sequelize, DataTypes) => {
-  const Post = sequelize.define("Post", {
-    postId: { type: DataTypes.STRING, primaryKey: true },
-    title: DataTypes.STRING,
-    description: DataTypes.TEXT,
-    likes: DataTypes.JSON,
-    comments: DataTypes.JSON,
-    saved: DataTypes.JSON,
-    files: DataTypes.JSON,
-  });
+  const Post = sequelize.define(
+    "Post",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+
+      vendorUid: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+
+      categoryId: {
+        type: DataTypes.INTEGER,
+       // عشان SET NULL
+      },
+
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      image: {
+  type: DataTypes.JSON, // array of urls
+  allowNull: true,
+}
+,
+
+      budget: {
+        type: DataTypes.DOUBLE,
+        allowNull: true,
+      },
+
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+    },
+    {
+    
+      timestamps: true,
+    }
+  );
 
   Post.associate = (models) => {
-    Post.hasMany(models.Gallery, { foreignKey: "postId" });
+    // البوست تابع Vendor
+    Post.belongsTo(models.Vendor, {
+      foreignKey: "vendorUid",
+      targetKey: "vendorUid",
+        as: "vendor",  
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    });
 
-    // Many to Many with Skills
-    Post.belongsToMany(models.Skills, {
-      through: "PostSkills",
-      foreignKey: "postId",
+    // تصنيف البوست
+    Post.belongsTo(models.Category, {
+      foreignKey: "categoryId",
+        as: "category",
+      onDelete: "SET NULL",
+      onUpdate: "CASCADE",
     });
   };
 

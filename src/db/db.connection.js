@@ -62,7 +62,7 @@ Object.keys(models).forEach(modelName => {
 //  SYNC DB (CREATE TABLES)
 // =============================
 export const syncDBConnection = async () => {
-   await sequelize.sync({ alter: true })
+   await sequelize.sync()
         .then(res => {
             console.log('DB synced done');
         })

@@ -12,4 +12,6 @@ router.post("/forgetpassword",loginservice.forgotpassword)
 router.post("/validateforgetpassword",loginservice.validateForgotPassword)
 router.post("/resetpassword",loginservice.resetpassword)
 router.post("/loginwithgmail",loginservice.loginwithgmail)
+router.post("/loginwithfacebook", loginservice.loginWithFacebook);
+
 export default router 

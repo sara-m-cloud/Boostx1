@@ -1,49 +1,41 @@
+
+
 export default (sequelize, DataTypes) => {
   const Project = sequelize.define("Project", {
-    uid: DataTypes.INTEGER,
-    title: DataTypes.STRING,
-    description: DataTypes.TEXT,
-   id: {                     // نضيف ID افتراضي
-    type: DataTypes.INTEGER, // أو UUID لو عايز
-    autoIncrement: true,
-    primaryKey: true,
-  },
-
-    bugetStartingFrom: DataTypes.DOUBLE,
-    bugetUpTo: DataTypes.DOUBLE,
-
-    expectedDays: DataTypes.INTEGER,
-
-    // list of files
-    files: {
-      type: DataTypes.JSON,   // أو TEXT حسب اختيارك
-      allowNull: true
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
     },
 
-    createdAt: DataTypes.STRING,
-    updatedAt: DataTypes.STRING,
+    uid: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
 
-    // Category foreign key must be here
-    categoryId: DataTypes.STRING
+    categoryId: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+
+    title: DataTypes.STRING,
+    description: DataTypes.TEXT,
+    bugetStartingFrom: DataTypes.DOUBLE,
+    bugetUpTo: DataTypes.DOUBLE,
+    expectedDays: DataTypes.INTEGER,
+    files: DataTypes.JSON
   });
 
   Project.associate = (models) => {
-    // user
-    Project.belongsTo(models.User, { foreignKey: "uid" });
-
-    // category
-    Project.belongsTo(models.Category, { foreignKey: "categoryId" });
-
-    // skills → pending your answer: Many-to-many or One-to-many?
-    Project.belongsToMany(models.Skills, {
-      through: "ProjectSkills",
-      foreignKey: "projectId"
+    Project.belongsTo(models.User, {
+      foreignKey: "uid",
+      targetKey: "uid" // 👈 مهم جدًا
     });
 
-     Project.hasMany(models.ProjectRequest, {
-       foreignKey: "projectId",
-      onDelete: "CASCADE"
-     });
+    Project.belongsTo(models.Category, {
+      foreignKey: "categoryId",
+      targetKey: "id"
+    });
   };
 
   return Project;

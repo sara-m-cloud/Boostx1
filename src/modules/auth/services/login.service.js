@@ -5,6 +5,7 @@ import { asynchandler } from "../../../utils/response/error.response.js";
 import { successResponse } from "../../../utils/response/success.response.js";
 import { comparehash, generatehash } from "../../../utils/security/hash.js";
 import  {OAuth2Client} from'google-auth-library';
+import axios from "axios";
 import { decodedtoken, generatetoken, tokentypes } from "../../../utils/security/token.js";
  const{User}=db
 export const login = asynchandler(async (req, res, next) => {
@@ -38,12 +39,20 @@ export const login = asynchandler(async (req, res, next) => {
     );
   }
  // 4) توليد التوكن
-  const accesstoken = generatetoken({
-    payload: { id: user.uid }, // مش user._id — SQL مفيهوش _id
-    signature: user.role==="Admin"
-      ? process.env.ADMIN_ACCESS_TOKEN
-      : process.env.USER_ACCESS_TOKEN,
-  });
+const signatureUsed =
+  user.role === "Admin"
+    ? process.env.ADMIN_ACCESS_TOKEN
+    : process.env.USER_ACCESS_TOKEN;
+
+console.log("TOKEN SIGNED WITH:", signatureUsed);
+
+const accesstoken = generatetoken({
+  payload: { id: user.uid },
+  signature: signatureUsed,
+});
+
+
+  
   const refreshtoken = generatetoken({
     payload: { id: user.uid },
     signature:user.role==="Admin"
@@ -83,9 +92,9 @@ export const loginwithgmail = asynchandler(async (req, res, next) => {
   // 2) لو مش موجود → نعمله إنشاء
   if (!user) {
     user = await User.create({
-      username: payload.name,
+      name: payload.name,
       email: payload.email,
-      image: payload.picture,
+      imageUrl: payload.picture,
       provider: providertypes.google,
       confirmEmail: true
     });
@@ -122,6 +131,78 @@ console.log(user);
         refreshToken,
       }
     }
+  });
+});
+export const loginWithFacebook = asynchandler(async (req, res, next) => {
+  const { accessToken } = req.body;
+
+  if (!accessToken) {
+    return next(new Error("Access Token is required", { cause: 400 }));
+  }
+
+  // 1️⃣ نجيب بيانات المستخدم من فيسبوك
+  const fbURL = `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${accessToken}`;
+
+  let fbData;
+  try {
+    const response = await axios.get(fbURL);
+    fbData = response.data;
+  } catch (err) {
+    return next(new Error("Invalid Facebook access token", { cause: 400 }));
+  }
+  console.log("FB DATA:", fbData);
+
+
+  const { id: facebookId, name, email, picture } = fbData;
+
+  // 2️⃣ نبحث عن اليوزر بالايميل
+  let user = await User.findOne({
+    where: { email }
+  });
+
+  // 3️⃣ لو مش موجود → نعمله إنشاء بصيغة موحّدة
+  if (!user) {
+    user = await User.create({
+      name,
+      email,
+      imageUrl: picture?.data?.url,
+      provider: providertypes.facebook,   // ضيفي value "facebook" عندك في enum
+      confirmEmail: true
+    });
+  }
+
+  // 4️⃣ لو اليوزر Provider مختلف → Error
+  if (user.provider !== providertypes.facebook) {
+    return next(new Error("Invalid provider for this email", { cause: 400 }));
+  }
+
+  // 5️⃣ Generate Access & Refresh Tokens
+  const accessTokenJWT = generatetoken({
+    payload: { uid: user.uid },
+    signature: user.role === "Admin"
+      ? process.env.ADMIN_ACCESS_TOKEN
+      : process.env.USER_ACCESS_TOKEN
+  });
+
+  const refreshToken = generatetoken({
+    payload: { uid: user.uid },
+    signature: user.role === "Admin"
+      ? process.env.ADMIN_REFRESH_TOKEN
+      : process.env.USER_REFRESH_TOKEN
+  });
+
+  // 6️⃣ Response موحّد مثل Gmail login
+  return successResponse({
+    res,
+    status: 200,
+    message: "Facebook login successful",
+    data: {
+      token: {
+        accessToken: accessTokenJWT,
+        refreshToken,
+      },
+      user,
+    },
   });
 });
 export const getrefreshtoken = asynchandler(async (req, res, next) => {

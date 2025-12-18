@@ -1,10 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
-import { uploadStoryMedia } from "../../../utils/multer/uploadedimage.js";
 import { asynchandler } from "../../../utils/response/error.response.js";
 import { successResponse } from "../../../utils/response/success.response.js";
 import { db } from "../../../db/db.connection.js";
 import { roletypes } from '../../../db/models/User.model.js';
 import { Op, literal } from "sequelize";
+import cron from "node-cron";
+import { deleteStoryFolderFromSupabase, uploadStoryMediaToSupabase } from '../../../utils/multer/supabaseUploads.js';
+
 const {sequelize}=db
 const {Story,StoryView,User}=db
 
@@ -31,7 +33,7 @@ export const createstory = asynchandler(async (req, res, next) => {
   const storyId = uuidv4()
 
   // ✅ Upload (نفس util بتاعك)
- const mediaUrls = await uploadStoryMedia(req.files, storyId);
+ const mediaUrls = await uploadStoryMediaToSupabase(req.files, storyId);
 
 
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -220,11 +222,15 @@ export const deleteStory = asynchandler(async (req, res, next) => {
   if (!storyId) {
     return next(new Error("Story id is required", { cause: 400 }));
   }
+  console.log(storyId);
+  
 
   // ✅ تأكد إن الستوري موجودة
   const story = await Story.findOne({
     where: { id: storyId },
   });
+  console.log(story);
+  
 
   if (!story) {
     return next(new Error("Story not found", { cause: 404 }));
@@ -240,18 +246,71 @@ export const deleteStory = asynchandler(async (req, res, next) => {
     where: { storyId },
   });
 
-  // ✅ (اختياري) حذف الميديا من Supabase
-  // await deleteStoryMediaFromSupabase(story.mediaUrl);
+ 
+
 
   // ✅ حذف الستوري
   await Story.destroy({
     where: { id: storyId },
   });
+  await deleteStoryFolderFromSupabase(storyId);
+
 
   return successResponse({
     res,
     message: "Story deleted successfully",
   });
 });
+export const startDeleteExpiredStoriesJob = () => {
+  cron.schedule("*/1 * * * *", async () => {
+    console.log("🕒 Running scheduled job: delete expired stories");
 
+    try {
+      await deleteExpiredStories();
+    // نادينا الفانكشن اللي بنفس نمط الكنترولر
+    } catch (error) {
+      console.error("❌ Cron Job Failed:", error);
+    }
+  });
 
+  console.log("🚀 Cron Job (Delete Expired Stories) started");
+};
+export const deleteExpiredStories = asynchandler(async () => {
+  const now = new Date();
+
+  // 1️⃣ هات كل الستوريز اللي انتهى وقتها
+  const expiredStories = await Story.findAll({
+    where: {
+      expiresAt: { [Op.lt]: now },
+    },
+  });
+
+  if (!expiredStories.length) {
+    console.log("✔️ No expired stories found");
+    return;
+  }
+
+  console.log(`📌 Found ${expiredStories.length} expired stories to delete`);
+
+  for (const story of expiredStories) {
+    const storyId = story.id;
+
+    // 2️⃣ احذف المشاهدات
+    await StoryView.destroy({
+      where: { storyId },
+    });
+
+    // 3️⃣ (اختياري) لو عايزة أحذف الميديا من Supabase
+    // await deleteStoryMediaFromSupabase(story.mediaUrl);
+
+    // 4️⃣ احذف الستوري نفسها
+    await Story.destroy({
+      where: { id: storyId },
+    });
+
+    console.log(`🗑️ Story ${storyId} deleted`);
+  }
+
+  console.log("✅ Expired stories deleted successfully");
+});
+ 

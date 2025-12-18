@@ -1,25 +1,47 @@
 export default (sequelize, DataTypes) => {
   const Category = sequelize.define("Category", {
-    id: { 
-      type: DataTypes.STRING, 
-      primaryKey: true 
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+        autoIncrement: true
+      
     },
 
-    name: DataTypes.STRING,
-    icon: DataTypes.STRING,
-    colorIcon: DataTypes.STRING,
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true
+    },
+
+    image: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
 
     minimumBudget: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0
+     
+    },
+
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
     }
   });
 
   Category.associate = (models) => {
-    Category.hasMany(models.Skills, { foreignKey: "categoryId" });
-    Category.hasMany(models.Project, { foreignKey: "categoryId" });
+    Category.hasMany(models.Skills, {
+      foreignKey: "categoryId",
+      as: "skills"
+    });
+
+    Category.hasMany(models.Project, {
+      foreignKey: "categoryId",
+      as: "projects"
+    });
   };
 
   return Category;
 };
+
