@@ -1,7 +1,7 @@
 import { db } from "../../../db/db.connection.js";
 
 const {User,Chat}=db
-export const getProfile = async (req, res) => {
+export const getchatProfile = async (req, res) => {
   const userId = req.user.uid;
   console.log(userId);
   

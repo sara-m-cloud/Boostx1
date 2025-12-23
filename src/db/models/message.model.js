@@ -19,6 +19,16 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
 
+isRead: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false
+}
+,
+seenAt: {
+  type: DataTypes.DATE,
+  allowNull: true,
+},
+
       senderId: {
         type: DataTypes.INTEGER,
         allowNull: false,

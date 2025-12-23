@@ -8,7 +8,11 @@ export default (sequelize, DataTypes) => {
 
   Client.associate = (models) => {
     Client.belongsTo(models.User, { foreignKey: "uid" });
+    
+Client.hasMany(models.Cart, { foreignKey: "clientUid", sourceKey: "uid", as: "carts" });
+
   };
+
 
   return Client;
 };

@@ -7,7 +7,9 @@ export const roletypes={
     Admin:"Admin",
     User:"User",
     Client:"Client",
-    Vendor:"Vendor"
+    Vendor:"Vendor",
+  
+   
 }
 export default (sequelize, DataTypes) => {
   const User = sequelize.define("User", {

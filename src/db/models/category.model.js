@@ -40,6 +40,12 @@ export default (sequelize, DataTypes) => {
       foreignKey: "categoryId",
       as: "projects"
     });
+    Category.belongsToMany(models.Agency, {
+  through: models.AgencyCategory,
+  foreignKey: "categoryId",
+  otherKey: "agencyId",
+});
+
   };
 
   return Category;

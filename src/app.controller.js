@@ -6,9 +6,12 @@ import bannnercontroller from "./modules/Banner/Banner.controller.js"
 import postcontroller from "./modules/posts/post.controller.js"
  import storycontroller from "./modules/story/story.controller.js"
  import chatcontroller from "./modules/chat/chat.controller.js"
- import usercontroller from "./modules/profile/profile.controller.js"
+ import usercontroller from "./modules/chatprofile/chatprofile.controller.js"
+ import profilecontroller from "./modules/profile/profile.controller.js"
+ import cartcontroller from "./modules/cart/cart.controller.js"
 // import { startDeleteExpiredStoriesJob } from "./modules/story/services/story.service.js"
 import cors from "cors";
+import { startDeleteExpiredStoriesJob } from "./modules/story/services/story.service.js"
 
 
 const bootstrap=async(app,express)=>{
@@ -31,10 +34,11 @@ app.use(cors({
      app.use("/post",postcontroller) //for banner module
     app.use("/story",storycontroller)
  app.use("/user",usercontroller)
+ app.use("/profile",profilecontroller)
 // app.use("/post",postcontroller)
  app.use("/chat",chatcontroller)
-
-// startDeleteExpiredStoriesJob()
+app.use("/cart",cartcontroller)
+ startDeleteExpiredStoriesJob()
 // app.all("*",(req,res,next)=>{res.status(404).json({message:"in-valid routing"})})
 
 app.use(globalhandlingerror)

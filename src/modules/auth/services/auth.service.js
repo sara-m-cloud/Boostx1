@@ -8,6 +8,7 @@ import { emailevent } from "../../../utils/events/email.event.js";
 const { User, Admin, Freelancer, Vendor, Agency } = db;
 export const signup = asynchandler(async (req, res, next) => {
   const { description, email, Password, role, imageUrl, name, phoneNumber } = req.body;
+  
 const existingUser = await User.findOne({ 
   where: { email } 
 });

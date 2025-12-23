@@ -1,5 +1,5 @@
 import { db } from "../../../db/db.connection.js";
-import { Op } from "sequelize";
+import { Op,literal } from "sequelize";
 
 const { Chat, Message, User } = db;
 
@@ -34,6 +34,17 @@ export const getChat = async (req, res) => {
   if (![chat.clientId, chat.freelancerId].includes(userId)) {
     return res.status(403).json({ message: "Forbidden" });
   }
+  await Message.update(
+  { isRead: true },
+  {
+    where: {
+      chatId,
+      senderId: { [Op.ne]: userId },
+      isRead: false
+    }
+  }
+);
+
 
   res.json({
     message: "Done",
@@ -73,6 +84,8 @@ export const openChat = async (req, res) => {
     data: { chat },
   });
 };
+
+
 export const listChats = async (req, res) => {
   const userId = req.user.uid;
 
@@ -84,25 +97,29 @@ export const listChats = async (req, res) => {
       ]
     },
     include: [
-      {
-        model: User,
-        as: "client",
-        attributes: ["uid", "name", "imageUrl"]
-      },
-      {
-        model: User,
-        as: "freelancer",
-        attributes: ["uid", "name", "imageUrl"]
-      },
+      { model: User, as: "client", attributes: ["uid", "name", "imageUrl"] },
+      { model: User, as: "freelancer", attributes: ["uid", "name", "imageUrl"] },
       {
         model: Message,
         as: "messages",
-        separate: true,               // ⭐ مهم
+        separate: true,
         limit: 1,
         order: [["createdAt", "DESC"]],
         attributes: ["message", "createdAt"]
       }
-    ]
+    ],
+    attributes: {
+      include: [[
+        literal(`(
+          SELECT COUNT(*)
+          FROM messages
+          WHERE messages.chatId = Chat.id
+            AND messages.isRead = false
+            AND messages.senderId != ${userId}
+        )`),
+        "unreadCount"
+      ]]
+    }
   });
 
   res.json({ message: "Done", data: { chats } });

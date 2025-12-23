@@ -2,24 +2,24 @@ import { db } from "../../../db/db.connection.js";
 import { uploadPostImages } from "../../../utils/multer/supabaseUploads.js";
 import { asynchandler } from "../../../utils/response/error.response.js";
 import { successResponse } from "../../../utils/response/success.response.js";
-const{Vendor,Post,Category}=db
-export const createPost = asynchandler(async (req, res, next) => {
-  const { title, description, budget, categoryId } = req.body;
+const { Vendor, Project, Category } = db;
+export const createProject = asynchandler(async (req, res, next) => {
+  const {
+    title,
+    description,
+    budget,
+    categoryId,
+    visibility = "public",
+  } = req.body;
 
-  // ✅ validation أساسي
   if (!title || !description) {
-    return next(
-      new Error("Title and description are required", { cause: 400 })
-    );
+    return next(new Error("Title and description are required", { cause: 400 }));
   }
 
   if (!req.files || req.files.length === 0) {
-    return next(new Error("Post images are required", { cause: 400 }));
+    return next(new Error("Project images are required", { cause: 400 }));
   }
 
-  console.log("USER UID:", req.user.uid);
-
-  // ✅ 1) هات Vendor من uid
   const vendor = await Vendor.findOne({
     where: { uid: req.user.uid, isActive: true },
   });
@@ -28,41 +28,54 @@ export const createPost = asynchandler(async (req, res, next) => {
     return next(new Error("Vendor not found", { cause: 403 }));
   }
 
-  // ✅ 2) إنشاء الـ Post
-  const post = await Post.create({
+  // 1️⃣ create project
+  const createdProject = await Project.create({
     vendorUid: vendor.vendorUid,
     title,
     description,
     budget,
     categoryId,
+    status: "open",
+    visibility,
     isActive: true,
   });
 
-  console.log("POST ID:", post.id);
-
-  // ✅ 3) رفع الصور
+  // 2️⃣ upload images
   const imageUrls = await uploadPostImages(
     req.files,
     vendor.vendorUid,
-    post.id
+    createdProject.id
   );
 
-  // ✅ 4) تحديث البوست بالصور
-  await post.update({
-    image: imageUrls, // JSON array
+  await createdProject.update({ image: imageUrls });
+
+  // 3️⃣ fetch project with relations
+  const project = await Project.findByPk(createdProject.id, {
+    include: [
+      {
+        model: Vendor,
+        as: "vendor",
+        attributes: ["vendorUid", "displayName", "rate"],
+      },
+      {
+        model: Category,
+        as: "category",
+        attributes: ["id", "name"],
+      },
+    ],
   });
 
   return successResponse({
     res,
     status: 201,
-    message: "Post created successfully",
-    data: {
-      post,
-      images: imageUrls,
-    },
+    message: "Project created successfully",
+    data: project,
   });
 });
-export const listPosts = asynchandler(async (req, res, next) => {
+
+import { Op } from "sequelize";
+
+export const listProjects = asynchandler(async (req, res, next) => {
   const {
     page = 1,
     limit = 10,
@@ -77,12 +90,12 @@ export const listPosts = asynchandler(async (req, res, next) => {
 
   const whereCondition = {
     isActive: true,
+    visibility: "public",
+    status: "open",
   };
 
   if (search) {
-    whereCondition.title = {
-      [Op.like]: `%${search}%`, // ✅ MySQL
-    };
+    whereCondition.title = { [Op.like]: `%${search}%` };
   }
 
   if (categoryId) {
@@ -96,17 +109,14 @@ export const listPosts = asynchandler(async (req, res, next) => {
   }
 
   let order = [["createdAt", "DESC"]];
+  if (sort === "budget_asc") order = [["budget", "ASC"]];
+  if (sort === "budget_desc") order = [["budget", "DESC"]];
+console.log("MODEL NAME:", Project.name);
 
-  if (sort === "budget_asc") {
-    order = [["budget", "ASC"]];
-  } else if (sort === "budget_desc") {
-    order = [["budget", "DESC"]];
-  }
-
-  const { rows: posts, count } = await Post.findAndCountAll({
+  const { rows: projects, count } = await Project.findAndCountAll({
     where: whereCondition,
     limit: Number(limit),
-    offset: Number(offset),
+    offset,
     order,
     include: [
       {
@@ -124,186 +134,148 @@ export const listPosts = asynchandler(async (req, res, next) => {
 
   return successResponse({
     res,
-    message: "Posts fetched successfully",
+    message: "Projects fetched successfully",
     data: {
       total: count,
       page: Number(page),
       pages: Math.ceil(count / limit),
-      posts,
+      projects,
     },
   });
 });
-export const getSinglePost = asynchandler(async (req, res, next) => {
-  const { postId } = req.params;
+export const getSingleProject = asynchandler(async (req, res, next) => {
+  const { projectId } = req.params;
 
-  const post = await Post.findOne({
-    where: {
-      id: postId,
-      isActive: true,
-    },
+  const project = await Project.findOne({
+    where: { id: projectId, isActive: true },
     include: [
-      {
-        model: Vendor,
-        as: "vendor",
-        attributes: ["vendorUid", "displayName"],
-      },
-      {
-        model: Category,
-        as: "category",
-        attributes: ["id", "name"],
-      },
+      { model: Vendor, as: "vendor", attributes: ["vendorUid", "displayName"] },
+      { model: Category, as: "category", attributes: ["id", "name"] },
     ],
   });
 
-  if (!post) {
-    return next(new Error("Post not found", { cause: 404 }));
+  if (!project) {
+    return next(new Error("Project not found", { cause: 404 }));
   }
 
   return successResponse({
     res,
-    message: "Post fetched successfully",
-    data: post,
+    message: "Project fetched successfully",
+    data: project,
   });
 });
-export const getVendorPosts = asynchandler(async (req, res, next) => {
-  // 1️⃣ user uid من التوكن
-  const userUid = req.user.uid;
 
-  // 2️⃣ هات الـ Vendor
+export const getVendorProjects = asynchandler(async (req, res, next) => {
   const vendor = await Vendor.findOne({
-    where: {
-      uid: userUid,
-      isActive: true,
-    },
+    where: { uid: req.user.uid, isActive: true },
   });
 
   if (!vendor) {
     return next(new Error("Vendor not found", { cause: 403 }));
   }
 
-  // 3️⃣ هات بوستات الفيندور
-  const posts = await Post.findAll({
+  const projects = await Project.findAll({
     where: {
-      vendorUid: vendor.vendorUid, // ✅ الصح
+      vendorUid: vendor.vendorUid,
+      isActive: true,
     },
     include: [
-      {
-        model: Category,
-        as: "category",
-        attributes: ["id", "name"],
-      },
+      { model: Category, as: "category", attributes: ["id", "name"] },
     ],
     order: [["createdAt", "DESC"]],
   });
 
   return successResponse({
     res,
-    message: "Vendor posts fetched successfully",
-    data: posts,
+    message: "Vendor projects fetched successfully",
+    data: projects,
   });
 });
-export const updatePost = asynchandler(async (req, res, next) => {
-  const { postId } = req.params;
-  const { title, description, budget, categoryId } = req.body;
 
-  // 1️⃣ user uid
-  const userUid = req.user.uid;
+export const updateProject = asynchandler(async (req, res, next) => {
+  const { projectId } = req.params;
+  const { title, description, budget, categoryId, status, visibility } =
+    req.body;
 
-  // 2️⃣ هات Vendor
   const vendor = await Vendor.findOne({
-    where: {
-      uid: userUid,
-      isActive: true,
-    },
+    where: { uid: req.user.uid, isActive: true },
   });
 
   if (!vendor) {
     return next(new Error("Vendor not found", { cause: 403 }));
   }
 
-  // 3️⃣ هات البوست
-  const post = await Post.findOne({
+  const project = await Project.findOne({
     where: {
-      id: postId,
+      id: projectId,
       vendorUid: vendor.vendorUid,
       isActive: true,
     },
   });
 
-  if (!post) {
-    return next(new Error("Post not found or not authorized", { cause: 404 }));
+  if (!project) {
+    return next(
+      new Error("Project not found or not authorized", { cause: 404 })
+    );
   }
 
-  // 4️⃣ حدّث البيانات (لو موجودة)
-  await post.update({
-    title: title ?? post.title,
-    description: description ?? post.description,
-    budget: budget ?? post.budget,
-    categoryId: categoryId ?? post.categoryId,
+  await project.update({
+    title: title ?? project.title,
+    description: description ?? project.description,
+    budget: budget ?? project.budget,
+    categoryId: categoryId ?? project.categoryId,
+    status: status ?? project.status,
+    visibility: visibility ?? project.visibility,
   });
 
-  // 5️⃣ لو فيه صور → حدّث الصور
   if (req.files && req.files.length > 0) {
-    // (اختياري) امسحي الصور القديمة من storage هنا
-
     const imageUrls = await uploadPostImages(
       req.files,
       vendor.vendorUid,
-      post.id
+      project.id
     );
-
-    await post.update({
-      image: imageUrls,
-    });
+    await project.update({ image: imageUrls });
   }
 
   return successResponse({
     res,
-    message: "Post updated successfully",
-    data: post,
+    message: "Project updated successfully",
+    data: project,
   });
 });
 
-export const deletePost = asynchandler(async (req, res, next) => {
-  const { postId } = req.params;
+export const deleteProject = asynchandler(async (req, res, next) => {
+  const { projectId } = req.params;
 
-  // 1️⃣ user uid
-  const userUid = req.user.uid;
-
-  // 2️⃣ هات Vendor
   const vendor = await Vendor.findOne({
-    where: {
-      uid: userUid,
-      isActive: true,
-    },
+    where: { uid: req.user.uid, isActive: true },
   });
 
   if (!vendor) {
     return next(new Error("Vendor not found", { cause: 403 }));
   }
 
-  // 3️⃣ هات البوست وتأكد إنه بتاعه
-  const post = await Post.findOne({
+  const project = await Project.findOne({
     where: {
-      id: postId,
+      id: projectId,
       vendorUid: vendor.vendorUid,
       isActive: true,
     },
   });
 
-  if (!post) {
-    return next(new Error("Post not found or not authorized", { cause: 404 }));
+  if (!project) {
+    return next(
+      new Error("Project not found or not authorized", { cause: 404 })
+    );
   }
 
-  // 4️⃣ Soft delete
-  await post.update({
-    isActive: false,
-  });
+  await project.update({ isActive: false });
 
   return successResponse({
     res,
-    message: "Post deleted successfully",
+    message: "Project deleted successfully",
   });
-})
+});
+
 
 

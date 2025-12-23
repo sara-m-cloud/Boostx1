@@ -60,11 +60,16 @@ export default (sequelize, DataTypes) => {
     });
 
     // Vendor عنده Posts
-    Vendor.hasMany(models.Post, {
+    Vendor.hasMany(models.Project, {
       foreignKey: "vendorUid",
       sourceKey: "vendorUid",
       onDelete: "CASCADE",
     });
+Vendor.hasMany(models.CartItem, {
+  foreignKey: "vendorUid",
+  sourceKey: "vendorUid",
+  as: "cartItems",
+});
 
     // Vendor عنده Completed Projects
     Vendor.hasMany(models.CompletedProject, {

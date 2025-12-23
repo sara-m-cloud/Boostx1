@@ -45,18 +45,32 @@ for (const file of files) {
   const modelModule = await import(modelURL);
   const model = modelModule.default(sequelize, DataTypes);
   models[model.name] = model;
+  // 🔥 alias: Post table = Project concept
+if (model.name === "Post") {
+  models.Project = model;
+}
 }
 
 console.log("Loaded models:", Object.keys(models));
 
 // ======== Setup associations ========
+// Object.keys(models).forEach(modelName => {
+//   if (models[modelName].associate) {
+//     models[modelName].associate(models);
+//   }
+// });
+
+ const associated = new Set();
+
 Object.keys(models).forEach(modelName => {
-  if (models[modelName].associate) {
-    models[modelName].associate(models);
+  const model = models[modelName];
+
+  if (model.associate && !associated.has(model)) {
+    model.associate(models);
+    associated.add(model);
   }
 });
 
- 
 
 // =============================
 //  SYNC DB (CREATE TABLES)

@@ -302,6 +302,7 @@ export const deleteExpiredStories = asynchandler(async () => {
 
     // 3️⃣ (اختياري) لو عايزة أحذف الميديا من Supabase
     // await deleteStoryMediaFromSupabase(story.mediaUrl);
+     await deleteStoryFolderFromSupabase(storyId);
 
     // 4️⃣ احذف الستوري نفسها
     await Story.destroy({

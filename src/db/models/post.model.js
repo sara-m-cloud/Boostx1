@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-  const Post = sequelize.define(
+  const Project = sequelize.define(
     "Post",
     {
       id: {
@@ -42,6 +42,22 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+      status: {
+  type: DataTypes.ENUM(
+    "draft",
+    "open",
+    "in_progress",
+    "completed",
+    "cancelled"
+  ),
+  defaultValue: "open",
+},
+
+visibility: {
+  type: DataTypes.ENUM("public", "private"),
+  defaultValue: "public",
+},
+
     },
     {
     
@@ -49,18 +65,19 @@ export default (sequelize, DataTypes) => {
     }
   );
 
-  Post.associate = (models) => {
+  Project.associate = (models) => {
     // البوست تابع Vendor
-    Post.belongsTo(models.Vendor, {
+    Project.belongsTo(models.Vendor, {
       foreignKey: "vendorUid",
       targetKey: "vendorUid",
         as: "vendor",  
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });
+Project.hasMany(models.CartItem, { foreignKey: "projectId", as: "cartItems" });
 
     // تصنيف البوست
-    Post.belongsTo(models.Category, {
+    Project.belongsTo(models.Category, {
       foreignKey: "categoryId",
         as: "category",
       onDelete: "SET NULL",
@@ -68,5 +85,5 @@ export default (sequelize, DataTypes) => {
     });
   };
 
-  return Post;
+  return Project;
 };
